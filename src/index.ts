@@ -324,7 +324,7 @@ function buildServiceWorker(hexo: Hexo, hexoConfig: PluginConfig) {
 function sort(hexo: Hexo, pluginConfig: PluginConfig) {
     const version = hexo.version
     let Locals: any
-    if (version.startsWith('7')) {
+    if (parseInt(version.split('.', 2)[0]) >= 7) {
         Locals = require(nodePath.resolve('node_modules/hexo/dist/hexo/locals')).prototype
     } else {
         Locals = require(nodePath.resolve('node_modules/hexo/lib/hexo/locals')).prototype
