@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import Hexo from 'hexo'
 import nodePath from 'path'
 import {
-    BasicActions, RuntimeException, swppVersion
+    BasicActions, CompilationData, RuntimeException, swppVersion
 } from 'swpp-backends'
 
 interface PluginConfig {
@@ -140,7 +140,7 @@ async function start(hexo: Hexo) {
                 await initRules(hexo, pluginConfig)
                 try {
                     const compilationData = actions.compilationData!
-                    const response = await compilationData.compilationEnv.read('NETWORK_FILE_FETCHER').fetch(test)
+                    const response = await fetchUrl(compilationData, test)
                     if ([200, 301, 302, 307, 308].includes(response.status)) {
                         logger.info('[SWPP][LINK TEST] 资源拉取成功，状态码：' + response.status)
                     } else {
@@ -217,8 +217,7 @@ async function runSwpp(hexo: Hexo, pluginConfig: PluginConfig) {
 function checkVersion(pluginConfig: PluginConfig) {
     const compilationData = actions.compilationData!
     const root = pluginConfig['npm_url'] ?? 'https://registry.npmjs.org'
-    const fetcher = compilationData.compilationEnv.read('NETWORK_FILE_FETCHER')
-    fetcher.fetch(`${root}/swpp-backends/${swppVersion}`)
+    fetchUrl(compilationData, `${root}/swpp-backends/${swppVersion}`)
         .then(response => {
             if (![200, 301, 302, 307, 308].includes(response.status)) return Promise.reject(response.status)
             return response.json()
@@ -390,6 +389,15 @@ function sort(hexo: Hexo, pluginConfig: PluginConfig) {
             })
         }
         return result
+    }
+}
+
+function fetchUrl(compilationData: CompilationData, url: string): Promise<Response> {
+    const fetcher = compilationData.compilationEnv.read('NETWORK_FILE_FETCHER') as any
+    if (fetcher.fetch) {
+        return fetcher.fetch(url)
+    } else {
+        return fetch(url)
     }
 }
 
